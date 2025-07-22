@@ -7,10 +7,10 @@ import crypto from "../utils/Crypto.js";
 (async function () {
     try {
         await connectDB();
-        const hashedPassword = await crypto.encrypt(config.SupeAdminPassword);
+        const hashedPassword = await crypto.encrypt(config.Admin.SupeAdminPassword);
         await Admin.create({
-            userName: config.SuperAdminUserName,
-            email: config.SuperAdminEmail,
+            userName: config.Admin.SuperAdminUserName,
+            email: config.Admin.SuperAdminEmail,
             hashedPassword,
             role: "superAdmin",
         });
