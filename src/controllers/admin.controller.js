@@ -1,26 +1,18 @@
-import adminModel from "../models/admin.model.js";
+import Admin from "../models/admin.model.js";
 import { BaseController } from "./base.controller.js";
 import crypto from "../utils/Crypto.js";
 import token from "../utils/Token.js";
 import config from "../config/index.js";
-import validator from "../validation/AdminValidation.js"
 
 class AdminController extends BaseController {
     constructor() {
-        super(adminModel);
+        super(Admin);
     }
 
     async creatAdmin(req, res) {
         try {
-            const { error } = validator.create(req.body)
-            if (error) {
-                return res.status(422).json({
-                    statusCode: 422,
-                    message: error.details[0].message ?? 'error input validation'
-                })
-            }
             const { userName, email, password } = req.body;
-            const existsUserName = await adminModel.findOne({ userName });
+            const existsUserName = await Admin.findOne({ userName });
 
             if (existsUserName) {
                 return res.status(409).json({
@@ -29,7 +21,7 @@ class AdminController extends BaseController {
                 });
             }
 
-            const existsEmail = await adminModel.findOne({ email });
+            const existsEmail = await Admin.findOne({ email });
             if (existsEmail) {
                 return res.status(409).json({
                     statusCode: 409,
@@ -38,11 +30,12 @@ class AdminController extends BaseController {
             }
             const hashedPassword = await crypto.encrypt(password);
 
-            const newAdmin = await adminModel.create({
+            const newAdmin = await Admin.create({
                 userName,
                 email,
                 hashedPassword,
             });
+            
             return res.status(200).json({
                 statusCode: 200,
                 message: "success",
@@ -58,15 +51,8 @@ class AdminController extends BaseController {
 
     async signIn(req, res) {
         try {
-            const {error }= validator.signin(req.body)
-            if (error) {
-                return res.status(400).json({
-                    statusCode:400,
-                    message:error.details[0].message
-                })
-            }
             const { userName, password } = req.body;
-            const admin = await adminModel.findOne({ userName });
+            const admin = await Admin.findOne({ userName });
             const isMatchPassword = await crypto.decrypt(
                 password,
                 admin?.hashedPassword ?? ""
@@ -128,7 +114,7 @@ class AdminController extends BaseController {
                     message: "refresh token expire",
                 });
             }
-            const admin = await adminModel.findById(verifiedToken?.id);
+            const admin = await Admin.findById(verifiedToken?.id);
             if (!admin) {
                 return res.status(403).json({
                     statusCode: 403,
@@ -176,7 +162,7 @@ class AdminController extends BaseController {
                     message: "refresh token expire",
                 });
             }
-            const admin = await adminModel.findById(verifiedToken?.id);
+            const admin = await Admin.findById(verifiedToken?.id);
             if (!admin) {
                 return res.status(403).json({
                     statusCode: 403,
