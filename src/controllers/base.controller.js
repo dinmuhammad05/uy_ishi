@@ -1,135 +1,86 @@
 import { isValidObjectId } from "mongoose";
+import { AppError } from "../error/AppError.js";
+import { successRes } from "../utils/succes-res.js";
 
 export class BaseController {
-
     constructor(model) {
-        this.model = model
+        this.model = model;
     }
 
-    create = async (req, res) => {
+    create = async (req, res, next) => {
         try {
             const data = await this.model.create(req.body);
-            return res.status(201).json({
-                statusCode: 201,
-                message: "success",
-                data
-            })
+            return successRes(res, data, 201);
         } catch (error) {
-            return res.status(500).json({
-                statusCode: 500,
-                message: error.message || 'interval server error'
-            })
+            next(error);
         }
-    }
+    };
 
-    getAll = async (_, res) => {
+    getAll = async (_, res, next) => {
         try {
             const data = await this.model.find();
-            return res.status(200).json({
-                statusCode: 200,
-                message: "success",
-                data
-            })
+            return successRes(res, data);
         } catch (error) {
-            return res.status(500).json({
-                statusCode: 500,
-                message: error.message || 'interval server error'
-            })
+            next(error);
         }
-    }
+    };
 
-    getById = async (req, res) => {
+    getById = async (req, res, next) => {
         try {
-            const id = req.params?.id
-            await this.checkId(id, res)
+            const id = req.params?.id;
+            await this.checkId(id, next);
             const data = await this.model.findById(id);
             if (!data) {
-                return res.status(404).json({
-                    statusCode: 404,
-                    message: "not found"
-                })
+                throw new AppError("not found", 404);
             }
 
-            return res.status(200).json({
-                statusCode: 200,
-                message: "success",
-                data
-            })
+            return successRes(res, data);
         } catch (error) {
-            return res.status(500).json({
-                statusCode: 500,
-                message: error.message || 'interval server error'
-            })
+            next(error);
         }
-    }
+    };
 
-    update = async (req, res) => {
+    update = async (req, res, next) => {
         try {
-            const id = req.params.id
-            await this.checkId(id, res);
-            const data = await this.model.findByIdAndUpdate(id, req.body, {new:true})
+            const id = req.params.id;
+            await this.checkId(id, next);
+            const data = await this.model.findByIdAndUpdate(id, req.body, {
+                new: true,
+            });
 
             if (!data) {
-                return res.status(404).json({
-                    statusCode: 404,
-                    message: "not found"
-                })
+                throw new AppError("not found", 404);
             }
-            
-            return res.status(200).json({
-                statusCode: 200,
-                message: "success",
-                data
-            })
-        } catch (error) {
-            return res.status(500).json({
-                statusCode: 500,
-                message: error.message || 'interval server error'
-            })
-        }
-    }
 
-    delete = async (req, res) => {
+            return successRes(res, data);
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    delete = async (req, res, next) => {
         try {
-            const id = req.params.id
-            await this.checkId(id, res);
-            const data = await this.model.findByIdAndDelete(id)
+            const id = req.params.id;
+            await this.checkId(id, next);
+            const data = await this.model.findByIdAndDelete(id);
 
             if (!data) {
-                return res.status(404).json({
-                    statusCode: 404,
-                    message: "not found"
-                })
+                throw new AppError("not found", 404);
             }
-            
-            return res.status(200).json({
-                statusCode: 200,
-                message: "success",
-                data:{}
-            })
-        } catch (error) {
-            return res.status(500).json({
-                statusCode: 500,
-                message: error.message || 'interval server error'
-            })
-        }
-    }
 
-    checkId = async (id, res) => {
+            return successRes(res, {});
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    checkId = async (id, next) => {
         try {
             if (!isValidObjectId(id)) {
-                return res.status(400).json({
-                    statusCode: 400,
-                    message: "invalid Object Id"
-                })
+                throw new AppError("invalid object id");
             }
         } catch (error) {
-            return res.status(500).json({
-                statusCode: 500,
-                message: error.message || 'interval server error'
-            })
+            next(error);
         }
-    }
+    };
 }
-
-// export default new BaseController();

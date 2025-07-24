@@ -3,6 +3,7 @@ import config from "./config/index.js";
 import { connectDB } from "./db/index.js";
 import cookieParser from 'cookie-parser'
 import router from "./routes/index.route.js";
+import { globalErrorHandle } from "./error/global-error-handle.js";
 
 const app = express();
 
@@ -14,5 +15,7 @@ app.use(cookieParser())
 await connectDB();
 
 app.use("/api", router);
+
+app.use(globalErrorHandle);
 
 app.listen(PORT, () => console.log("server running on port", PORT));

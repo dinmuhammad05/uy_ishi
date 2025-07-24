@@ -3,30 +3,26 @@ import { BaseController } from "./base.controller.js";
 import crypto from "../utils/Crypto.js";
 import token from "../utils/Token.js";
 import config from "../config/index.js";
+import { AppError } from "../error/AppError.js";
+import { successRes } from "../utils/succes-res.js";
 
 class AdminController extends BaseController {
     constructor() {
         super(Admin);
     }
 
-    async creatAdmin(req, res) {
+    async creatAdmin(req, res, next) {
         try {
             const { userName, email, password } = req.body;
             const existsUserName = await Admin.findOne({ userName });
 
             if (existsUserName) {
-                return res.status(409).json({
-                    statusCode: 409,
-                    message: "user name already exists",
-                });
+                throw new AppError("user name already exists", 409);
             }
 
             const existsEmail = await Admin.findOne({ email });
             if (existsEmail) {
-                return res.status(409).json({
-                    statusCode: 409,
-                    message: "email already exists",
-                });
+                throw new AppError("email already exists", 409);
             }
             const hashedPassword = await crypto.encrypt(password);
 
@@ -35,17 +31,10 @@ class AdminController extends BaseController {
                 email,
                 hashedPassword,
             });
-            
-            return res.status(200).json({
-                statusCode: 200,
-                message: "success",
-                data: newAdmin,
-            });
+
+            return successRes(res, newAdmin, 201);
         } catch (error) {
-            return res.status(500).json({
-                statusCode: 500,
-                message: error.message || "interval server error",
-            });
+            next(error);
         }
     }
 
@@ -58,10 +47,7 @@ class AdminController extends BaseController {
                 admin?.hashedPassword ?? ""
             );
             if (!isMatchPassword) {
-                return res.status(400).json({
-                    statusCode: 400,
-                    message: "Username or password incorrect",
-                });
+                throw new AppError("Username or password incorrect", 400);
             }
 
             const playload = {
@@ -79,19 +65,12 @@ class AdminController extends BaseController {
                 30
             );
 
-            return res.status(200).json({
-                statusCode: 200,
-                message: "success",
-                data: {
-                    token: accessToken,
-                    admin,
-                },
+            return successRes(res, {
+                token: accessToken,
+                admin,
             });
         } catch (error) {
-            return res.status(500).json({
-                statusCode: 500,
-                message: error.message || "interval server error",
-            });
+            next(error);
         }
     }
 
@@ -99,27 +78,18 @@ class AdminController extends BaseController {
         try {
             const refreshToken = req.cookies?.refreshTokenAdmin;
             if (!refreshToken) {
-                return res.status(401).json({
-                    statusCode: 401,
-                    message: "refresh token not found",
-                });
+                throw new AppError("refresh token not found", 401);
             }
             const verifiedToken = token.verifyToken(
                 refreshToken,
                 config.Token.Refresh_Token_Key
             );
             if (!verifiedToken) {
-                return res.status(401).json({
-                    statusCode: 401,
-                    message: "refresh token expire",
-                });
+                throw new AppError("refresh token expire", 401);
             }
             const admin = await Admin.findById(verifiedToken?.id);
             if (!admin) {
-                return res.status(403).json({
-                    statusCode: 403,
-                    message: "Forbidden user",
-                });
+                throw new AppError("forbidden user", 403);
             }
             const playload = {
                 id: admin._id,
@@ -127,18 +97,12 @@ class AdminController extends BaseController {
                 isActive: admin.isActive,
             };
             const accessToken = token.generateAccessToken(playload);
-            return res.status(200).json({
-                statusCode: 200,
-                message: "success",
-                data: {
-                    token: accessToken,
-                },
+            return successRes(res, {
+                token: accessToken,
+                admin,
             });
         } catch (error) {
-            return res.status(500).json({
-                statusCode: 500,
-                message: error.message || "interval server error",
-            });
+            next(error);
         }
     }
 
@@ -146,10 +110,7 @@ class AdminController extends BaseController {
         try {
             const refreshToken = req.cookies?.refreshTokenAdmin;
             if (!refreshToken) {
-                return res.status(401).json({
-                    statusCode: 401,
-                    message: "refresh tooken not found",
-                });
+                throw new AppError("refresh tooken not found", 401);
             }
 
             const verifiedToken = token.verifyToken(
@@ -157,29 +118,16 @@ class AdminController extends BaseController {
                 config.Token.Refresh_Token_Key
             );
             if (!verifiedToken) {
-                return res.status(401).json({
-                    statusCode: 401,
-                    message: "refresh token expire",
-                });
+                throw new AppError("refresh token expire", 401);
             }
             const admin = await Admin.findById(verifiedToken?.id);
             if (!admin) {
-                return res.status(403).json({
-                    statusCode: 403,
-                    message: "forbidden user",
-                });
+                throw new AppError("forbidden user", 403);
             }
             res.clearCookie("refreshTokenAdmin");
-            return res.status(200).json({
-                statusCode: 200,
-                message: "success",
-                data: {},
-            });
+            return successRes(res, {})
         } catch (error) {
-            return res.status(500).json({
-                statusCode: 500,
-                message: error.message || "interval server error",
-            });
+            next(error);
         }
     }
 }
