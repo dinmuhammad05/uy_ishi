@@ -73,14 +73,4 @@ export class BaseController {
             next(error);
         }
     };
-
-    checkId = async (id, next) => {
-        try {
-            if (!isValidObjectId(id)) {
-                throw new AppError("invalid object id");
-            }
-        } catch (error) {
-            next(error);
-        }
-    };
 }

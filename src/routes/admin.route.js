@@ -16,5 +16,5 @@ router
     .get('/:id', AuthGuard, RolesGuard('superAdmin', 'ID'), controller.getById)
     .patch('/:id', AuthGuard, RolesGuard('superAdmin', 'ID'), controller.update)
     .delete('/:id', AuthGuard, RolesGuard('superAdmin'), controller.delete)
-
+    
 export default router;
