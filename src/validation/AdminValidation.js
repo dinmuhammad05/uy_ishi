@@ -26,6 +26,12 @@ class AdminValidator {
             password: Joi.string().pattern(AdminValidator.passRegex).optional(),
         });
     }
+    password() {
+        return Joi.object({
+            oldPassword: Joi.string().required(),
+            newPassword: Joi.string().pattern(AdminValidator.passRegex).required()
+        })
+    }
 }
 
 export default new AdminValidator();

@@ -28,11 +28,7 @@ export class BaseController {
     getById = async (req, res, next) => {
         try {
             const id = req.params?.id;
-            await this.checkId(id, next);
-            const data = await this.model.findById(id);
-            if (!data) {
-                throw new AppError("not found", 404);
-            }
+            const data = await BaseController.checkId(this.model, id);
 
             return successRes(res, data);
         } catch (error) {
@@ -43,7 +39,7 @@ export class BaseController {
     update = async (req, res, next) => {
         try {
             const id = req.params.id;
-            await this.checkId(id, next);
+            await BaseController.checkId(this.model, id);
             const data = await this.model.findByIdAndUpdate(id, req.body, {
                 new: true,
             });
@@ -61,16 +57,26 @@ export class BaseController {
     delete = async (req, res, next) => {
         try {
             const id = req.params.id;
-            await this.checkId(id, next);
-            const data = await this.model.findByIdAndDelete(id);
-
-            if (!data) {
-                throw new AppError("not found", 404);
-            }
+            await BaseController.checkId(this.model, id);
+            await this.model.findByIdAndDelete(id);
 
             return successRes(res, {});
         } catch (error) {
             next(error);
         }
+    };
+
+    static checkId = async (schema, id) => {
+        console.log(id);
+        
+            if (!isValidObjectId(id)) {
+                throw new AppError("invalid object id", 400);
+            }
+            const data = await schema.findById(id)
+            if (!data) {
+                throw new AppError("not found", 404);
+            }
+            return data
+        
     };
 }
