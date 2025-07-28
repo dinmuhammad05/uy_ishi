@@ -5,6 +5,9 @@ import token from "../utils/Token.js";
 import config from "../config/index.js";
 import { AppError } from "../error/AppError.js";
 import { successRes } from "../utils/succes-res.js";
+import { generateOTP } from "../utils/generate-OTP.js";
+import redis from "../utils/Redis.js";
+import { sendToOTP } from "../utils/send-mail.js";
 
 class AdminController extends BaseController {
     constructor() {
@@ -125,7 +128,7 @@ class AdminController extends BaseController {
                 throw new AppError("forbidden user", 403);
             }
             res.clearCookie("refreshTokenAdmin");
-            return successRes(res, {})
+            return successRes(res, {});
         } catch (error) {
             next(error);
         }
@@ -133,57 +136,128 @@ class AdminController extends BaseController {
 
     async updateAdmin(req, res, next) {
         try {
-            const id = req.params.id
-            const admin = await BaseController.checkId(Admin ,id)
-            const { userName, email, password } = req.body
+            const id = req.params.id;
+            const admin = await BaseController.checkId(Admin, id);
+            const { userName, email, password } = req.body;
             if (userName) {
-                const exists = findOne({ userName })
+                const exists = findOne({ userName });
                 if (exists && exists.userName !== userName) {
-                    throw new AppError('username already exists', 409)
+                    throw new AppError("username already exists", 409);
                 }
             }
             if (email) {
-                const exists = findOne({ email })
+                const exists = findOne({ email });
                 if (email && exists.email !== email) {
-                    throw new AppError('email already exists', 409)
+                    throw new AppError("email already exists", 409);
                 }
             }
-            let hashedPassword = admin.hashedPassword
+            let hashedPassword = admin.hashedPassword;
             if (password) {
                 if (req.user.role != admin.role) {
-                    throw new AppError('Not access to change password for admin', 403);
+                    throw new AppError("Not access to change password for admin", 403);
                 }
                 hashedPassword = await crypto.encrypt(password);
                 delete req.body.password;
             }
-            const updatedAdmin = await Admin.findByIdAndUpdate(id, {
-                ...req.body, hashedPassword
-            }, { new: true });
+            const updatedAdmin = await Admin.findByIdAndUpdate(
+                id,
+                {
+                    ...req.body,
+                    hashedPassword,
+                },
+                { new: true }
+            );
             return successRes(res, updatedAdmin);
-
         } catch (error) {
-            next(error)
+            next(error);
         }
     }
 
     async updatePasswordforAdmin(req, res, next) {
         try {
-            const id = req.params.id
+            const id = req.params.id;
             console.log(id);
 
-            const admin = await BaseController.checkId(Admin, id)
+            const admin = await BaseController.checkId(Admin, id);
             console.log(admin);
 
-            const { oldPassword, newPassword: newPassword } = req.body
-            const isMatchedPassword = await crypto.decrypt(oldPassword, admin.hashedPassword)
+            const { oldPassword, newPassword: newPassword } = req.body;
+            const isMatchedPassword = await crypto.decrypt(
+                oldPassword,
+                admin.hashedPassword
+            );
             if (!isMatchedPassword) {
-                throw new AppError('incorrect old password', 400)
+                throw new AppError("incorrect old password", 400);
             }
-            const hashedPassword = await crypto.encrypt(newPassword)
-            const updatedAdmin = await Admin.findByIdAndUpdate(id, { hashedPassword }, { new: true })
-            return successRes(res, updatedAdmin)
+            const hashedPassword = await crypto.encrypt(newPassword);
+            const updatedAdmin = await Admin.findByIdAndUpdate(
+                id,
+                { hashedPassword },
+                { new: true }
+            );
+            return successRes(res, updatedAdmin);
         } catch (error) {
-            next(error)
+            next(error);
+        }
+    }
+
+    async forgetPassword(req, res, next) {
+        try {
+            const { email } = req.body;
+            const exists = await Admin.findOne({ email });
+            if (!exists) {
+                throw new AppError("email address is not found", 404);
+            }
+
+            const otp = generateOTP();
+            sendToOTP(email, otp);
+            redis.setData(email, otp);
+            return successRes(res, {
+                email,
+                otp,
+                exprin: "3 minutes",
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async confirmOTP(req, res, next) {
+        try {
+            const { email, otp } = req.body;
+            const checkOTP = await redis.getData(email);
+
+            if (checkOTP !== otp) {
+                throw new AppError("OTP expired or expired");
+            }
+            await redis.deleteData(email);
+            return successRes(res, {
+                confirmPasswordUrl: "127.0.1:2000/api/admin/confirm-password",
+                requestMethod: "PATCH",
+                email,
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async confirmPassword(req, res, next) {
+        try {
+            const { email, newPassword } = req.body;
+            const admin = await Admin.findOne({ email });
+            if (!admin) {
+                throw new AppError("email address is not found", 404);
+            }
+            const hashedPassword = await crypto.encrypt(newPassword);
+            const updatedAdmin = await Admin.findByIdAndUpdate(
+                admin._id,
+                { hashedPassword },
+                { new: true }
+            );
+
+            return successRes(res, updatedAdmin);
+        } catch (error) {
+            next(error);
         }
     }
 }
