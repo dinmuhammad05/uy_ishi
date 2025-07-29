@@ -5,8 +5,8 @@ const CourseSchema = new Schema({
     description: { type: String, required: true },
     image: { type: String, required: true },
     price: { type: Number, required: true },
-    ownerId: { type: Schema.ObjectId, required: true },
-    categoryId: { type: Schema.ObjectId, required: true },
+    owner: { type: Schema.ObjectId, ref:'OwnerCourse'  },
+    category: { type: Schema.ObjectId, ref: 'Category' },
 },
     { timestamps: true, versionKey: false });
 

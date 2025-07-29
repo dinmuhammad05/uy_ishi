@@ -3,8 +3,10 @@ import { AppError } from "../error/AppError.js";
 import { successRes } from "../utils/succes-res.js";
 
 export class BaseController {
-    constructor(model) {
+    constructor(model, populateFields) {
         this.model = model;
+        this.populateFields= populateFields;
+        
     }
 
     create = async (req, res, next) => {
@@ -18,7 +20,13 @@ export class BaseController {
 
     getAll = async (_, res, next) => {
         try {
-            const data = await this.model.find();
+            let data = await this.model.find();
+            // if (this.populateFields.length) {
+            //     for (let populateField of this.populateFields) {
+            //         data = data.populate(populateField);
+            //     }
+            // }
+
             return successRes(res, data);
         } catch (error) {
             next(error);
@@ -68,15 +76,15 @@ export class BaseController {
 
     static checkId = async (schema, id) => {
         console.log(id);
-        
-            if (!isValidObjectId(id)) {
-                throw new AppError("invalid object id", 400);
-            }
-            const data = await schema.findById(id)
-            if (!data) {
-                throw new AppError("not found", 404);
-            }
-            return data
-        
+
+        if (!isValidObjectId(id)) {
+            throw new AppError("invalid object id", 400);
+        }
+        const data = await schema.findById(id)
+        if (!data) {
+            throw new AppError("not found", 404);
+        }
+        return data
+
     };
 }

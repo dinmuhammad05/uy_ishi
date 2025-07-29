@@ -10,7 +10,7 @@ export default {
     Admin: {
         SuperAdminUserName: process.env.userName,
         SuperAdminEmail: process.env.email,
-        SupeAdminPassword: process.env.hashedPassword
+        SuperAdminPassword: process.env.hashedPassword
     },
     Token: {
         Access_Token_Key: String(process.env.Access_Token_Key),

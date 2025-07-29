@@ -1,0 +1,22 @@
+import { Router } from "express";
+import controller from "../controllers/owner-course.controller.js";
+import { validate } from '../middlewares/validate.js';
+import OwnerValidation from '../validation/OwnerValidation.js';
+import { RolesGuard } from '../guards/role.guard.js'
+import { AuthGuard } from "../guards/auth.guard.js";
+const router = Router();
+
+router
+    .post('/', validate(OwnerValidation.create), controller.createOwner)
+    .post('/signin', validate(OwnerValidation.signin), controller.signin)
+    .post('/token', controller.generateNewToken)
+    .post('/signout', controller.signOut)
+
+    .get('/', AuthGuard, RolesGuard('owner'), controller.getAll)
+    .get('/:id', AuthGuard, RolesGuard('superAdmin', 'ID'), controller.getById)
+
+    .patch('/:id', AuthGuard, RolesGuard('superAdmin', 'ID'), validate(OwnerValidation.update), controller.update)
+
+    .delete('/:id', AuthGuard, RolesGuard('superAdmin', 'ID'), controller.delete)
+
+export default router;

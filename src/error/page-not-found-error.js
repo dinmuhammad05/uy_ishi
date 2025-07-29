@@ -1,5 +1,7 @@
-import { AppError } from "./AppError.js"
+import { AppError } from "./AppError.js";
 
-export const pageError = (_req, _res, next) =>{
-throw next(new AppError('page not found', 404))
-}
+export const pageError = (_eq, _res, next) => {
+    const errorMessage =
+        req.url.split("/")[1] === "uploads" ? "file not found" : "Page not found";
+    throw next(new AppError(errorMessage, 404));
+};
