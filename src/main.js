@@ -5,19 +5,23 @@ import cookieParser from 'cookie-parser'
 import router from "./routes/index.route.js";
 import { globalErrorHandle } from "./error/global-error-handle.js";
 import cors from 'cors'
+import { join } from 'path'
 
 const app = express();
 
 const PORT = config.PORT;
 
 app.use(cors({
-    origin:'*'
+    origin: '*'
 }))
 
 app.use(express.json());
 app.use(cookieParser())
 
+
 await connectDB();
+
+app.use('/uploads', express.static(join(process.cwd(), '../uploads')))
 
 app.use("/api", router);
 
