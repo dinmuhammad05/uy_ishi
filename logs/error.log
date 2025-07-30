@@ -3,3 +3,5 @@
 {"level":"error","message":"500 statusCode is not defined","timestamp":"30/07/2025, 15:08:57"}
 {"level":"error","message":"409 user name already exists","timestamp":"30/07/2025, 15:09:22"}
 {"level":"error","message":"409 email already exists","timestamp":"30/07/2025, 15:09:28"}
+{"level":"error","message":"400 Username or password incorrect","timestamp":"30/07/2025, 20:42:32"}
+{"level":"error","message":"400 Username or password incorrect","timestamp":"30/07/2025, 20:43:32"}
