@@ -8,6 +8,7 @@ import { successRes } from "../utils/succes-res.js";
 import { generateOTP } from "../utils/generate-OTP.js";
 import redis from "../utils/Redis.js";
 import { sendToOTP } from "../utils/send-mail.js";
+import logger from '../helpers/log/logger.js'
 
 class AdminController extends BaseController {
     constructor() {
@@ -34,7 +35,7 @@ class AdminController extends BaseController {
                 email,
                 hashedPassword,
             });
-
+            logger.info(`${201} ${'successfully created admin'} ${userName}`)
             return successRes(res, newAdmin, 201);
         } catch (error) {
             next(error);

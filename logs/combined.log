@@ -1,0 +1,7 @@
+{"level":"error","message":"500 username or password incorrect","timestamp":"30/07/2025, 14:31:13"}
+{"level":"info","message":"200 success","timestamp":"30/07/2025, 14:42:31"}
+{"level":"error","message":"409 email already exists","timestamp":"30/07/2025, 15:08:42"}
+{"level":"error","message":"500 statusCode is not defined","timestamp":"30/07/2025, 15:08:57"}
+{"level":"error","message":"409 user name already exists","timestamp":"30/07/2025, 15:09:22"}
+{"level":"error","message":"409 email already exists","timestamp":"30/07/2025, 15:09:28"}
+{"level":"info","message":"201 successfully created admin Suhrobey","timestamp":"30/07/2025, 15:09:35"}
