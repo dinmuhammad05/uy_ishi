@@ -15,6 +15,7 @@ export const AuthGuard = async (req, res, next) => {
         }
         
         const user = token.verifyToken(authToken, config.Token.Access_Token_Key);
+        
         req.user = user;
         next();
     } catch (error) {

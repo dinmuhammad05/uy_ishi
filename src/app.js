@@ -30,10 +30,10 @@ export const application = async (app) => {
     app.use("/api", router);
 
     
-    // app.use(
-    //     expressWinston.errorLogger({
-    //         winstonInstance: logger,
-    //     })
-    // );
+    app.use(
+        expressWinston.errorLogger({
+            winstonInstance: logger,
+        })
+    );
     app.use(globalErrorHandle);
 };

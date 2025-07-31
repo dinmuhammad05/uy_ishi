@@ -6,7 +6,8 @@ const ClientSchema = new Schema({
     fullName: { type: String, required: true },
     hashedPassword: { type: String, required: true },
     isActive: { type: Boolean, default: true },
-    wallet: { type: String, required: true, unique: true },
+    wallet: { type: Number, default:0 },
+    role:{type: String, default:'client'}
 },
     { timestamps: true, versionKey: false });
 

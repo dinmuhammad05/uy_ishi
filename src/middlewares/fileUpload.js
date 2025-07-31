@@ -2,7 +2,8 @@ import { join } from 'path'
 import { existsSync, mkdirSync } from 'fs'
 import multer from 'multer'
 import { v4 } from 'uuid'
-
+ 
+ 
 const uploadir = join(process.cwd(), '../uploads');
 
 if (!existsSync(uploadir)) {
@@ -18,5 +19,7 @@ const storage = multer.diskStorage({
         cb(null, filename)
     }
 });
+
+
 
 export const uploadFile = multer({ storage })

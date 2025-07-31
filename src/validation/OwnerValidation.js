@@ -6,7 +6,8 @@ class OwnerValidation{
 
     create(){
         return Joi.object({
-            email:Joi.string().email().required(),
+            email:Joi.string().email().required(),  //1etap 
+            // 2 etap
             username:Joi.string().required(),
             password:Joi.string().pattern(OwnerValidation.passRegex).required(),
             fullName:Joi.string().required(),

@@ -3,8 +3,9 @@ import { AppError } from "../error/AppError.js";
 import { successRes } from "../utils/succes-res.js";
 
 export class BaseController {
-    constructor(model) {
+    constructor(model, populateFields = []) {
         this.model = model;
+        this.populateFields = populateFields;
     }
 
     create = async (req, res, next) => {
@@ -18,7 +19,12 @@ export class BaseController {
 
     getAll = async (_, res, next) => {
         try {
-            let data = await this.model.find();
+            const fields = this.populateFields;
+            let query = this.model.find();
+            if (fields?.length) {
+                fields.forEach((field) => query.populate(field));
+            }
+            const data = await query.exec();
             return successRes(res, data);
         } catch (error) {
             next(error);
@@ -28,8 +34,13 @@ export class BaseController {
     getById = async (req, res, next) => {
         try {
             const id = req.params?.id;
-            const data = await BaseController.checkId(this.model, id);
-
+            await BaseController.checkId(this.model, id);
+            let query = this.model.findById(id);
+            const fields = this.populateFields;
+            if (fields?.length) {
+                fields.forEach((field) => query.populate(field));
+            }
+            const data = await query.exec();
             return successRes(res, data);
         } catch (error) {
             next(error);
