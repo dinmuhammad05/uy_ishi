@@ -14,7 +14,7 @@ router
     .post('/token', controller.generateNewToken)
     .post('/signout', controller.signOut)
 
-    .get('/', AuthGuard, RolesGuard('owner'), controller.getAll)
+    .get('/', AuthGuard, RolesGuard('superAdmin','ID'), controller.getAll)
     .get('/:id', AuthGuard, RolesGuard('superAdmin', 'ID'), controller.getById)
 
     .patch('/:id', AuthGuard, RolesGuard('superAdmin', 'ID'), validate(OwnerValidation.update), controller.update)

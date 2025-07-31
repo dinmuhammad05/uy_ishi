@@ -21,7 +21,7 @@ const OwnerCourseSchema = new Schema(
     }
 );
 
-OwnerCourseSchema.virtual("courses", {
+OwnerCourseSchema.virtual("Course", {
     ref: "Course",
     localField: "_id",
     foreignField: "owner",

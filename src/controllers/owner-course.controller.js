@@ -8,7 +8,7 @@ import config from "../config/index.js";
 
 class OwnerController extends BaseController {
     constructor() {
-        super(Owner);
+        super(Owner,['Course']);
     }
 
     async createOwner(req, res, next) {
