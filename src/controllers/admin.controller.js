@@ -264,3 +264,5 @@ class AdminController extends BaseController {
 }
 
 export default new AdminController();
+
+

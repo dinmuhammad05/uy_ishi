@@ -1,17 +1,21 @@
 import { Router } from "express";
 
 import controller from "../controllers/course-videos.controller.js";
+import { AuthGuard } from "../guards/auth.guard.js";
+import { RolesGuard } from "../guards/role.guard.js";
+import {validate} from "../middlewares/validate.js";
+import VideosValidation from "../validation/VideosValidation.js";
 
 const router = Router();
 
 router
-    .post("/", controller.creatVideos)
+    .post("/", validate(VideosValidation.create), controller.creatVideos)
 
-    .get("/", controller.getAll)
-    .get("/:id", controller.getById)
+    .get("/", AuthGuard, RolesGuard('superAdmin', 'admin', 'ID'), controller.getAll)
+    .get("/:id",  AuthGuard, RolesGuard('superAdmin', 'admin', 'ID'), controller.getById)
 
-    .patch("/:id", controller.updateVideos)
+    .patch("/:id", AuthGuard, RolesGuard('superAdmin', 'admin', 'ID'), validate(VideosValidation.update), controller.updateVideos)
 
-    .delete("/:id", controller.delete);
+    .delete("/:id", AuthGuard, RolesGuard('superAdmin', 'admin', 'ID'), controller.delete);
 
 export default router;

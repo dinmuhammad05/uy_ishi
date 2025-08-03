@@ -1,17 +1,31 @@
+import { AppError } from "../error/AppError.js";
 import Category from "../models/category.model.js";
 import { successRes } from "../utils/succes-res.js";
 import { BaseController } from "./base.controller.js";
 
 class CategoryController extends BaseController {
     constructor() {
-        super(Category, ['Course']);
+        super(Category, [
+            {
+                path: "courses",
+                populate: [
+                    { path: "owner" },
+                    { path: "category" }, // self populate (not necessary)
+                    { path: "coursevideos" },
+                ],
+            },
+        ]);
     }
 
     async createCategory(req, res, next) {
         try {
+            if (!req.file) {
+                throw new AppError("rasm yuklashda xatolik", 400);
+            }
+
             const newCategory = await Category.create({
                 ...req.body,
-                image: req.body?.file?.filename,
+                image: req?.file?.filename,
             });
 
             return successRes(res, newCategory, 201);

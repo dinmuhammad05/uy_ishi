@@ -5,7 +5,12 @@ import { AppError } from "../error/AppError.js";
 import { successRes } from "../utils/succes-res.js";
 class VideosController extends BaseController {
     constructor() {
-        super(Videos);
+        super(Videos, [
+            {
+                path: "courseId",
+                populate: [{ path: "owner" }, { path: "category" }],
+            },
+        ]);
     }
 
     async creatVideos(req, res, next) {

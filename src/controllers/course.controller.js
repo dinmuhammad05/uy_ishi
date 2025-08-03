@@ -4,7 +4,15 @@ import { successRes } from "../utils/succes-res.js";
 
 class CourseController extends BaseController {
     constructor() {
-        super(Course, [/**"CourseVideos" , "Order"*/]);
+        super(Course, [
+            { path: "owner" },
+            { path: "category" },
+            { path: "coursevideos" },
+            {
+                path: "orders",
+                populate: { path: "clientId" },
+            },
+        ]);
     }
 
     async createCourse(req, res, next) {

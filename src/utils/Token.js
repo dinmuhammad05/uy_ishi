@@ -2,14 +2,14 @@ import jwt from "jsonwebtoken";
 import config from "../config/index.js";
 
 class Token {
-    generateAccessToken(playload) {
-        return jwt.sign(playload, config.Token.Access_Token_Key, {
+    generateAccessToken(payload) {
+        return jwt.sign(payload, config.Token.Access_Token_Key, {
             expiresIn: config.Token.Access_Token_Time,
         });
     }
 
-    generateRefreshToken(playload) {
-        return jwt.sign(playload, config.Token.Refresh_Token_Key, {
+    generateRefreshToken(payload) {
+        return jwt.sign(payload, config.Token.Refresh_Token_Key, {
             expiresIn: config.Token.Refresh_Token_Time,
         });
     }

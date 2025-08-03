@@ -9,7 +9,15 @@ import { sendToOTP } from "../utils/send-mail.js";
 
 class ClientController extends BaseController {
     constructor() {
-        super(Client, []);
+        super(Client, [
+            {
+                path: "orders",
+                populate: {
+                    path: "courseId",
+                    populate: [{ path: "owner" }, { path: "category" }],
+                },
+            },
+        ]);
     }
 
     async createClient(req, res) {

@@ -10,4 +10,15 @@ const CourseSchema = new Schema({
 },
     { timestamps: true, versionKey: false });
 
+    CourseSchema.virtual('coursevideos', {
+        ref: 'CourseVideos',
+        localField:'_id',
+        foreignField:'courseId'
+    })
+
+    CourseSchema.virtual('orders', {
+        ref: 'Order',
+        localField:'_id',
+        foreignField:'courseId'
+    })
 export default model("Course", CourseSchema);

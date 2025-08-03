@@ -3,12 +3,18 @@ import Owner from "../models/owner-course.model.js";
 import { BaseController } from "./base.controller.js";
 import crypto from "../utils/Crypto.js";
 import { successRes } from "../utils/succes-res.js";
-import token from '../utils/Token.js'
+import token from "../utils/Token.js";
 import config from "../config/index.js";
+import redis from "../utils/Redis.js";
 
 class OwnerController extends BaseController {
     constructor() {
-        super(Owner,['Course']);
+        super(Owner, [
+            {
+                path: "courses",
+                populate: [{ path: "category" }, { path: "coursevideos" }],
+            },
+        ]);
     }
 
     async createOwner(req, res, next) {
@@ -40,25 +46,28 @@ class OwnerController extends BaseController {
             const { username, password } = req.body;
 
             const owner = await Owner.findOne({ username });
-            const isMatched = await crypto.decrypt(password, owner?.hashedPassword ?? '');
+            const isMatched = await crypto.decrypt(
+                password,
+                owner?.hashedPassword ?? ""
+            );
 
             if (!isMatched) {
-                throw new AppError('username or password incorrect');
+                throw new AppError("username or password incorrect");
             }
 
             const payload = {
                 id: owner._id,
                 role: owner?.role,
-                isActive: owner.isActive
+                isActive: owner.isActive,
             };
 
             const accessToken = token.generateAccessToken(payload);
             const refershToken = token.generateRefreshToken(payload);
             token.writeToCookie(res, "refreshTokenOwner", refershToken, 30);
 
-            return successRes(res, { token: accessToken, owner })
+            return successRes(res, { token: accessToken, owner });
         } catch (error) {
-            next(error)
+            next(error);
         }
     }
 
@@ -114,6 +123,66 @@ class OwnerController extends BaseController {
             }
             res.clearCookie("refreshTokenOwner");
             return successRes(res, {});
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async forgetPassword(req, res, next) {
+        try {
+            const { email } = req.body;
+            const exists = await Owner.findOne({ email });
+            if (!exists) {
+                throw new AppError("email address is not found", 404);
+            }
+
+            const otp = generateOTP();
+            sendToOTP(email, otp);
+            redis.setData(email, otp);
+            return successRes(res, {
+                email,
+                otp,
+                exprin: "3 minutes",
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async confirmOTP(req, res, next) {
+        try {
+            const { email, otp } = req.body;
+            const checkOTP = await redis.getData(email);
+
+            if (checkOTP !== otp) {
+                throw new AppError("OTP expired or expired");
+            }
+            await redis.deleteData(email);
+            return successRes(res, {
+                confirmPasswordUrl: "127.0.1:2000/api/owner/confirm-password",
+                requestMethod: "PATCH",
+                email,
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async confirmPassword(req, res, next) {
+        try {
+            const { email, newPassword } = req.body;
+            const owner = await Owner.findOne({ email });
+            if (!owner) {
+                throw new AppError("email address is not found", 404);
+            }
+            const hashedPassword = await crypto.encrypt(newPassword);
+            const updatedAdmin = await Admin.findByIdAndUpdate(
+                owner._id,
+                { hashedPassword },
+                { new: true }
+            );
+
+            return successRes(res, updatedAdmin);
         } catch (error) {
             next(error);
         }

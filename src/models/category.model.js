@@ -12,7 +12,7 @@ const CategorySchema = new Schema({
         toJSON: { virtuals: true }
     });
 
-CategorySchema.virtual('Course', {
+CategorySchema.virtual('courses', {
     ref: 'Course',
     localField: '_id',
     foreignField: 'category'
