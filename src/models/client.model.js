@@ -6,6 +6,7 @@ const ClientSchema = new Schema(
         phoneNumber: { type: String, required: true, unique: true },
         fullName: { type: String, required: true },
         hashedPassword: { type: String, required: true },
+        image: {type: String},
         isActive: { type: Boolean, default: true },
         wallet: { type: Number, default: 0 },
         role: { type: String, default: "client" },

@@ -1,10 +1,11 @@
-import fs from "fs";
+import fs, { existsSync, unlinkSync } from "fs";
 
 import { BaseController } from "./base.controller.js";
 import Videos from "../models/course-videos.model.js";
 import Course from "../models/course.model.js";
 import { AppError } from "../error/AppError.js";
 import { successRes } from "../utils/succes-res.js";
+import { join } from "path";
 class VideosController extends BaseController {
     constructor() {
         super(Videos, [
@@ -48,20 +49,62 @@ class VideosController extends BaseController {
     }
 
     async updateVideos(req, res, next) {
+        const id = req.params.id;
+
         try {
-            const id = req.body;
-            await BaseController.checkId(Videos, id);
+            // 1. Videoni topish
+            const video = await BaseController.checkId(Videos, id);
+
             const { courseId } = req.body;
-            const course = await Course.findOne({ courseId });
-            if (!course) {
-                throw new AppError("course not found", 404);
+
+            // 2. courseId bo'lsa, mavjudligini tekshirish
+            if (courseId) {
+                const course = await Course.findOne({ courseId });
+                if (!course) throw new AppError("Course not found", 404);
             }
-            const updatedVideo = await Videos.findOneAndUpdate(id, req.body, {
-                new: true,
-            });
+
+            // 3. Video faylni yangilash (agar yuklangan bo‘lsa)
+            let videoUrl = video.videoUrl;
+
+            if (req.file?.filename) {
+                const oldFilename = video.videoUrl?.split("/").pop();
+                const oldPath = join(
+                    process.cwd(),
+                    "../uploads/course-videos",
+                    oldFilename
+                );
+
+                // Eski faylni o‘chirish
+                if (existsSync(oldPath)) {
+                    unlinkSync(oldPath);
+                }
+
+                videoUrl = `/uploads/course-videos/${req.file.filename}`;
+            }
+
+            // 4. Videoni yangilash
+            const updatedVideo = await Videos.findByIdAndUpdate(
+                id,
+                { ...req.body, videoUrl },
+                { new: true }
+            );
+
             return successRes(res, updatedVideo);
-        } catch (error) {
-            next(error);
+        } catch (err) {
+            // ⚠️ Xatolik bo'lsa va fayl yuklangan bo‘lsa, uni o‘chirib yuborish
+            if (req.file?.path) {
+                try {
+                    unlinkSync(req.file.path);
+                    console.log("Yangi yuklangan fayl o'chirildi");
+                } catch (unlinkErr) {
+                    console.error(
+                        "Yuklangan faylni o'chirishda xato:",
+                        unlinkErr.message
+                    );
+                }
+            }
+
+            next(err);
         }
     }
 }

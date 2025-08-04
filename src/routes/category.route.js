@@ -15,7 +15,7 @@ router
     .get("/",AuthGuard, RolesGuard("superAdmin", "admin"), controller.getAll)
     .get("/:id",AuthGuard, RolesGuard("superAdmin", 'admin'), controller.getById)
 
-    .patch("/:id",AuthGuard, RolesGuard("superAdmin", 'admin'), validate(categoryValidation.update), controller.update)
+    .patch("/:id",AuthGuard, RolesGuard("superAdmin", 'admin'), uploadFile.single('file'), validate(categoryValidation.update), controller.updateCategory)
 
     .delete("/:id",AuthGuard, RolesGuard("superAdmin", ), controller.delete);
 

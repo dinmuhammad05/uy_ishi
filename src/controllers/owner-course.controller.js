@@ -1,4 +1,4 @@
-import fs from 'fs';
+import fs, { existsSync, unlinkSync } from "fs";
 
 import { AppError } from "../error/AppError.js";
 import Owner from "../models/owner-course.model.js";
@@ -10,6 +10,7 @@ import config from "../config/index.js";
 import redis from "../utils/Redis.js";
 import { generateOTP } from "../utils/generate-OTP.js";
 import { sendToOTP } from "../utils/send-mail.js";
+import { join } from "path";
 
 class OwnerController extends BaseController {
     constructor() {
@@ -44,7 +45,7 @@ class OwnerController extends BaseController {
                     tempOwner: {
                         ...req.body,
                         hashedPassword,
-                        image: req?.file?.filename ?? "",
+                        image: `/uploads/images/${req.file.filename ?? ""}`,
                     },
                 })
             );
@@ -70,6 +71,87 @@ class OwnerController extends BaseController {
             }
 
             next(err);
+        }
+    }
+
+    async updateOwner(req, res, next) {
+        try {
+            const id = req.params.id;
+            const owner = await BaseController.checkId(Owner, id);
+
+            const { email, username, password } = req.body;
+
+            if (username && username !== owner.username) {
+                const existsUsername = await Owner.findOne({ username });
+                if (existsUsername) {
+                    throw new AppError("Username already exists", 409);
+                }
+            }
+
+            if (email && email !== owner.email) {
+                const existsEmail = await Owner.findOne({ email });
+                if (existsEmail) {
+                    throw new AppError("Email already exists", 409);
+                }
+            }
+
+            let hashedPassword = owner.hashedPassword;
+            if (password) {
+                hashedPassword = await crypto.encrypt(password);
+                delete req.body.password;
+            }
+
+            let image = owner.image;
+            if (req.file?.filename) {
+                if (owner?.image) {
+                    const oldFile = owner.image.split("/").pop();
+                    const oldPath = join(
+                        process.cwd(),
+                        "../uploads/images",
+                        oldFile
+                    );
+                    if (existsSync(oldPath)) unlinkSync(oldPath);
+                }
+
+                image = `/uploads/images/${req.file.filename}`;
+            }
+
+            if (email) {
+                const OTP = generateOTP();
+                sendToOTP(email, OTP);
+                await redis.setData(
+                    email,
+                    JSON.stringify({
+                        otp: OTP,
+                        source: "update",
+                        tempOwner: {
+                            ...req.body,
+                            hashedPassword,
+                            image,
+                        },
+                    })
+                );
+                return successRes(res, {
+                    email,
+                    exprin: "3 minutes",
+                    confirmOTP: "127.0.1:2000/api/owner/confirm-otp",
+                    requestMethod: "PATCH",
+                });
+            }
+
+            const updatedOwner = await Owner.findByIdAndUpdate(
+                id,
+                {
+                    ...req.body,
+                    hashedPassword,
+                    image,
+                },
+                { new: true }
+            );
+
+            return successRes(res, updatedOwner);
+        } catch (error) {
+            next(error);
         }
     }
 
@@ -170,7 +252,7 @@ class OwnerController extends BaseController {
 
             const OTP = generateOTP();
             sendToOTP(email, OTP);
-            redis.setData(email, JSON.stringify({otp:OTP, source:''}));
+            redis.setData(email, JSON.stringify({ otp: OTP, source: "" }));
             return successRes(res, {
                 email,
                 OTP,
@@ -197,10 +279,24 @@ class OwnerController extends BaseController {
 
             if (source === "register") {
                 const created = await Owner.create(tempOwner);
+                return successRes(
+                    res,
+                    {
+                        message: "Registration confirmed successfully",
+                        client: created,
+                    },
+                    201
+                );
+            }
+
+            if (source === "update") {
+                const updated = await Owner.findByIdAndUpdate(id, tempOwner, {
+                    new: true,
+                });
                 return successRes(res, {
-                    message: "Registration confirmed successfully",
-                    client: created,
-                },201);
+                    message: "Updating and Registration confirmed successfully",
+                    client: updated,
+                });
             }
 
             return successRes(res, {

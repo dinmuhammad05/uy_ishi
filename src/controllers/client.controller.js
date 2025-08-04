@@ -1,3 +1,6 @@
+import { join } from "path";
+import { existsSync, unlinkSync } from "fs";
+
 import { AppError } from "../error/AppError.js";
 import Client from "../models/client.model.js";
 import crypto from "../utils/Crypto.js";
@@ -44,12 +47,15 @@ class ClientController extends BaseController {
                     tempClient: {
                         ...req.body,
                         hashedPassword,
+                        image: `/uploads/images/${req.file.filename ?? ''}`
+
                     },
                 })
             );
             sendToOTP(email, OTP);
 
             return successRes(res, {
+                
                 email,
                 exprin: "3 minutes",
                 confirmOTP: "127.0.1:2000/api/client/confirm-otp",
@@ -67,38 +73,62 @@ class ClientController extends BaseController {
         try {
             const id = req.params?.id;
             const client = await BaseController.checkId(Client, id);
+
             const { username, email, password } = req.body;
-            if (username) {
+
+            // 🔐 Username tekshiruvi
+            if (username && username !== client.username) {
                 const exists = await Client.findOne({ username });
-                if (exists && exists.username !== username) {
+                if (exists) {
                     throw new AppError("Username already exists", 409);
                 }
             }
-            if (email) {
+
+            // 🔐 Email tekshiruvi
+            if (email && email !== client.email) {
                 const exists = await Client.findOne({ email });
-                if (exists && exists.email !== email) {
+                if (exists) {
                     throw new AppError("Email address already exists", 409);
                 }
             }
-            let hashedPassword = admin.hashedPassword;
+
+            // 🔐 Parol yangilash
+            let hashedPassword = client.hashedPassword;
             if (password) {
-                if (req.user?.role != client.role) {
+                if (req.user?.role !== client.role) {
                     throw new AppError(
-                        "Not access to change password for c;ient",
+                        "Not access to change password for client",
                         403
                     );
                 }
                 hashedPassword = await crypto.encrypt(password);
                 delete req.body.password;
             }
+
+            // 📸 Rasm yangilash
+            let image = client.image;
+            if (req.file?.filename) {
+                const oldPath = join(
+                    process.cwd(),
+                    "../uploads/images",
+                    client.image?.split("/").pop()
+                );
+                if (existsSync(oldPath)) unlinkSync(oldPath);
+
+                image = `/uploads/images/${req.file.filename}`;
+            }
+
+            // 🆕 Yangilash
             const updatedClient = await Client.findByIdAndUpdate(
                 id,
                 {
                     ...req.body,
                     hashedPassword,
+                    image,
                 },
                 { new: true }
             );
+
             return successRes(res, updatedClient);
         } catch (error) {
             next(error);

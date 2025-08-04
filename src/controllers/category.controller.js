@@ -1,3 +1,6 @@
+import { join } from "path";
+import { unlinkSync, existsSync } from "fs";
+
 import { AppError } from "../error/AppError.js";
 import Category from "../models/category.model.js";
 import { successRes } from "../utils/succes-res.js";
@@ -25,12 +28,11 @@ class CategoryController extends BaseController {
 
             const newCategory = await Category.create({
                 ...req.body,
-                image: req?.file?.filename,
+                image: `/uploads/images/${req.file.filename ?? ""}`,
             });
 
             return successRes(res, newCategory, 201);
         } catch (err) {
-            // ❗ Fpathaylni Sync tarzda o‘chirish (bloklovchi)
             if (req.file?.path) {
                 try {
                     fs.unlinkSync(req.file.path);
@@ -44,6 +46,43 @@ class CategoryController extends BaseController {
             }
 
             next(err);
+        }
+    }
+
+    async updateCategory(req, res, next) {
+        try {
+            const id = req?.params?.id;
+            const category = await BaseController.checkId(Category, id);
+
+            let image = category?.image;
+            if (req?.file?.filename) {
+                if (category?.image) {
+                    const oldFile = category.image.split("/").pop(); // faqat agar image mavjud bo‘lsa
+                    const oldPath = join(
+                        process.cwd(),
+                        "../uploads/images",
+                        oldFile
+                    );
+
+                    if (existsSync(oldPath)) {
+                        unlinkSync(oldPath);
+                    }
+                }
+
+                image = `/uploads/images/${req.file.filename}`;
+            }
+
+            const updatedCategory = await Category.findByIdAndUpdate(
+                id,
+                {
+                    ...req.body,
+                    image,
+                },
+                { new: true }
+            );
+            return successRes(res, updatedCategory);
+        } catch (error) {
+            next(error);
         }
     }
 }

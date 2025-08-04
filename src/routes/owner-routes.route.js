@@ -21,7 +21,7 @@ router
     .patch('/forget-password', validate(OwnerValidation.forgetPassword), controller.forgetPassword)
     .patch('/confirm-otp', validate(OwnerValidation.confirmOTP), controller.confirmOTP)
     .patch('/confirm-password', validate(OwnerValidation.confirmPassword), controller.confirmPassword)
-    .patch('/:id', AuthGuard, RolesGuard('superAdmin', 'ID'), validate(OwnerValidation.update), controller.update)
+    .patch('/:id', AuthGuard, RolesGuard('superAdmin', 'ID'), validate(OwnerValidation.update), uploadFile.single('file'), controller.updateOwner)
 
     .delete('/:id', AuthGuard, RolesGuard('superAdmin', 'ID'), controller.delete)
 
