@@ -5,7 +5,7 @@ const OwnerCourseSchema = new Schema(
         email: { type: String, required: true, unique: true },
         username: { type: String, required: true, unique: true },
         fullName: { type: String, required: true },
-        isActive: { type: Boolean, default: false },
+        isActive: { type: Boolean, default: true },
         hashedPassword: { type: String, required: true },
         wallet: { type: Number, default:0 },
         experience: { type: String },
