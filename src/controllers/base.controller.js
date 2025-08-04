@@ -78,7 +78,6 @@ export class BaseController {
     };
 
     static checkId = async (schema, id) => {
-        console.log(id);
 
         if (!isValidObjectId(id)) {
             throw new AppError("invalid object id", 400);

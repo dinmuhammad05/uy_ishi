@@ -6,6 +6,7 @@ import { BaseController } from "./base.controller.js";
 import token from "../utils/Token.js";
 import redis from "../utils/Redis.js";
 import { sendToOTP } from "../utils/send-mail.js";
+import { generateOTP } from "../utils/generate-OTP.js";
 
 class ClientController extends BaseController {
     constructor() {
@@ -34,11 +35,26 @@ class ClientController extends BaseController {
                 throw new AppError("Phone number already exists", 409);
             }
             const hashedPassword = await crypto.encrypt(password);
-            const newClient = await Client.create({
-                ...req.body,
-                hashedPassword,
+            const OTP = generateOTP();
+            redis.setData(
+                email,
+                JSON.stringify({
+                    otp: OTP,
+                    source: "register",
+                    tempClient: {
+                        ...req.body,
+                        hashedPassword,
+                    },
+                })
+            );
+            sendToOTP(email, OTP);
+
+            return successRes(res, {
+                email,
+                exprin: "3 minutes",
+                confirmOTP: "127.0.1:2000/api/client/confirm-otp",
+                requestMethod: "PATCH",
             });
-            return successRes(res, newClient, 201);
         } catch (error) {
             return res.status(500).json({
                 statusCode: 500,
@@ -110,7 +126,6 @@ class ClientController extends BaseController {
             const accessToken = token.generateAccessToken(playload);
             const refreshToken = token.generateRefreshToken(playload);
             token.writeToCookie(res, "refreshTokenClient", refreshToken, 30);
-            await Client.findByIdAndUpdate(client._id, { isActive: true });
             return successRes(res, {
                 token: accessToken,
                 client,
@@ -185,13 +200,14 @@ class ClientController extends BaseController {
                 throw new AppError("email address is not found", 404);
             }
 
-            const otp = generateOTP();
-            sendToOTP(email, otp);
-            redis.setData(email, otp);
+            const OTP = generateOTP();
+            sendToOTP(email, JSON.stringify({ otp: OTP, source: "" }));
+            redis.setData(email, OTP);
             return successRes(res, {
                 email,
-                otp,
                 exprin: "3 minutes",
+                confirmOTP: "127.0.1:2000/api/client/confirm-otp",
+                requestMethod: "PATCH",
             });
         } catch (error) {
             next(error);
@@ -203,10 +219,26 @@ class ClientController extends BaseController {
             const { email, otp } = req.body;
             const checkOTP = await redis.getData(email);
 
-            if (checkOTP !== otp) {
-                throw new AppError("OTP expired or expired");
-            }
+            if (!checkOTP) throw new AppError("OTP expired or expired");
+
+            const { otp: savedOTP, source, tempClient } = JSON.parse(checkOTP);
+
+            if (otp !== savedOTP)
+                throw new AppError("OTP is incorrect or expired", 400);
+
             await redis.deleteData(email);
+            if (source === "register") {
+                const created = await Client.create(tempClient);
+                return successRes(
+                    res,
+                    {
+                        message: "Registration confirmed successfully",
+                        client: created,
+                    },
+                    201
+                );
+            }
+
             return successRes(res, {
                 confirmPasswordUrl: "127.0.1:2000/api/client/confirm-password",
                 requestMethod: "PATCH",

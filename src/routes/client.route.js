@@ -18,9 +18,11 @@ router
     .get("/", AuthGuard, RolesGuard('superAdmin', 'admin', 'ID'),  controller.getAll)
     .get("/:id", RolesGuard('superAdmin', 'admin', 'ID'), controller.getById)
 
-    .patch("/forget-password", validate(ClientValidation.forgetPassword), controller.forgetPassword)
     .patch("/confrim-otp", validate(ClientValidation.confirmOTP), controller.confirmOTP)
+    .patch("/forget-password", validate(ClientValidation.forgetPassword), controller.forgetPassword)
     .patch("/confirm-password", validate(ClientValidation.confirmPassword), controller.confirmPassword)
-    .patch("/:id", RolesGuard('superAdmin', 'admin', 'ID'), validate(ClientValidation.update), controller.updateClient);
+    .patch("/:id", RolesGuard('superAdmin', 'admin', 'ID'), validate(ClientValidation.update), controller.updateClient)
+
+    .delete('/:id', controller.delete)
 
 export default router;

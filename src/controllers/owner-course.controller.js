@@ -1,3 +1,5 @@
+import fs from 'fs';
+
 import { AppError } from "../error/AppError.js";
 import Owner from "../models/owner-course.model.js";
 import { BaseController } from "./base.controller.js";
@@ -6,6 +8,8 @@ import { successRes } from "../utils/succes-res.js";
 import token from "../utils/Token.js";
 import config from "../config/index.js";
 import redis from "../utils/Redis.js";
+import { generateOTP } from "../utils/generate-OTP.js";
+import { sendToOTP } from "../utils/send-mail.js";
 
 class OwnerController extends BaseController {
     constructor() {
@@ -28,14 +32,29 @@ class OwnerController extends BaseController {
             if (existsEmail) {
                 throw new AppError("Email already exists", 409);
             }
-
             const hashedPassword = await crypto.encrypt(password);
-            const newOwner = Owner.create({
-                ...req.body,
-                hashedPassword,
-                image: req?.file?.path ?? "",
+
+            const OTP = generateOTP();
+            sendToOTP(email, OTP);
+            await redis.setData(
+                email,
+                JSON.stringify({
+                    otp: OTP,
+                    source: "register",
+                    tempOwner: {
+                        ...req.body,
+                        hashedPassword,
+                        image: req?.file?.filename ?? "",
+                    },
+                })
+            );
+
+            return successRes(res, {
+                email,
+                exprin: "3 minutes",
+                confirmOTP: "127.0.1:2000/api/owner/confirm-otp",
+                requestMethod: "PATCH",
             });
-            return successRes(res, newOwner, 201);
         } catch (err) {
             // ❗ Faylni Sync tarzda o‘chirish (bloklovchi)
             if (req.file?.path) {
@@ -149,12 +168,12 @@ class OwnerController extends BaseController {
                 throw new AppError("email address is not found", 404);
             }
 
-            const otp = generateOTP();
-            sendToOTP(email, otp);
-            redis.setData(email, otp);
+            const OTP = generateOTP();
+            sendToOTP(email, OTP);
+            redis.setData(email, JSON.stringify({otp:OTP, source:''}));
             return successRes(res, {
                 email,
-                otp,
+                OTP,
                 exprin: "3 minutes",
             });
         } catch (error) {
@@ -167,10 +186,23 @@ class OwnerController extends BaseController {
             const { email, otp } = req.body;
             const checkOTP = await redis.getData(email);
 
-            if (checkOTP !== otp) {
-                throw new AppError("OTP expired or expired");
-            }
+            if (!checkOTP) throw new AppError("OTP expired or expired");
+
+            const { otp: savedOTP, source, tempOwner } = JSON.parse(checkOTP);
+
+            if (otp !== savedOTP)
+                throw new AppError("OTP is incorrect or expired");
+
             await redis.deleteData(email);
+
+            if (source === "register") {
+                const created = await Owner.create(tempOwner);
+                return successRes(res, {
+                    message: "Registration confirmed successfully",
+                    client: created,
+                },201);
+            }
+
             return successRes(res, {
                 confirmPasswordUrl: "127.0.1:2000/api/owner/confirm-password",
                 requestMethod: "PATCH",

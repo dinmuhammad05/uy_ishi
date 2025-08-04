@@ -177,7 +177,6 @@ class AdminController extends BaseController {
     async updatePasswordforAdmin(req, res, next) {
         try {
             const id = req.params.id;
-            console.log(id);
 
             const admin = await BaseController.checkId(Admin, id);
             console.log(admin);

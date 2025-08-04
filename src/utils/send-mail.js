@@ -19,11 +19,10 @@ const mailOptions = {
 }
 transporter.sendMail(mailOptions, function (err, info){
     if (err) {
-        console.log(err);
+        console.error(err);
         
     }else{
-        console.log(info);
-        
+        console.log('send-mail.js',info);
     }
 })
 }
