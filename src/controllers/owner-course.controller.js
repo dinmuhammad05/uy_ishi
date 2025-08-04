@@ -33,11 +33,24 @@ class OwnerController extends BaseController {
             const newOwner = Owner.create({
                 ...req.body,
                 hashedPassword,
-                image: req?.file?.filename ?? "",
+                image: req?.file?.path ?? "",
             });
             return successRes(res, newOwner, 201);
-        } catch (error) {
-            next(error);
+        } catch (err) {
+            // ❗ Faylni Sync tarzda o‘chirish (bloklovchi)
+            if (req.file?.path) {
+                try {
+                    fs.unlinkSync(req.file.path);
+                    console.log("Fayl o'chirildi");
+                } catch (unlinkErr) {
+                    console.error(
+                        "Faylni o'chirishda xato:",
+                        unlinkErr.message
+                    );
+                }
+            }
+
+            next(err);
         }
     }
 

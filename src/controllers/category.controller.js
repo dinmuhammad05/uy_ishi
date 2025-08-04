@@ -25,12 +25,25 @@ class CategoryController extends BaseController {
 
             const newCategory = await Category.create({
                 ...req.body,
-                image: req?.file?.filename,
+                image: req?.file?.path,
             });
 
             return successRes(res, newCategory, 201);
-        } catch (error) {
-            next(error);
+        } catch (err) {
+            // ❗ Faylni Sync tarzda o‘chirish (bloklovchi)
+            if (req.file?.path) {
+                try {
+                    fs.unlinkSync(req.file.path);
+                    console.log("Fayl o'chirildi");
+                } catch (unlinkErr) {
+                    console.error(
+                        "Faylni o'chirishda xato:",
+                        unlinkErr.message
+                    );
+                }
+            }
+
+            next(err);
         }
     }
 }

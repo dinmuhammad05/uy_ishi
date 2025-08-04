@@ -1,3 +1,5 @@
+import fs from "fs";
+
 import { BaseController } from "./base.controller.js";
 import Videos from "../models/course-videos.model.js";
 import Course from "../models/course.model.js";
@@ -16,14 +18,32 @@ class VideosController extends BaseController {
     async creatVideos(req, res, next) {
         try {
             const { courseId } = req.body;
-            const course = await Course.findOne({ courseId });
+            const course = await Course.findById(courseId);
+
             if (!course) {
                 throw new AppError("course not found", 404);
             }
-            const newVideo = await Videos.create(req.body);
-            return successRes(res, newVideo, 201);
-        } catch (error) {
-            next(error);
+
+            const newVideo = await Videos.create({
+                ...req.body,
+                videoUrl: req.file?.path,
+            });
+            return successRes(res, {}, 201);
+        } catch (err) {
+            // ❗ Faylni Sync tarzda o‘chirish (bloklovchi)
+            if (req.file?.path) {
+                try {
+                    fs.unlinkSync(req.file.path);
+                    console.log("Fayl o'chirildi");
+                } catch (unlinkErr) {
+                    console.error(
+                        "Faylni o'chirishda xato:",
+                        unlinkErr.message
+                    );
+                }
+            }
+
+            next(err);
         }
     }
 

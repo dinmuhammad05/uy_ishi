@@ -5,11 +5,12 @@ import { AuthGuard } from "../guards/auth.guard.js";
 import { RolesGuard } from "../guards/role.guard.js";
 import {validate} from "../middlewares/validate.js";
 import VideosValidation from "../validation/VideosValidation.js";
+import { uploadFile } from "../middlewares/fileUpload.js";
 
 const router = Router();
 
 router
-    .post("/", validate(VideosValidation.create), controller.creatVideos)
+    .post("/", validate(VideosValidation.create), uploadFile.single('file'), controller.creatVideos)
 
     .get("/", AuthGuard, RolesGuard('superAdmin', 'admin', 'ID'), controller.getAll)
     .get("/:id",  AuthGuard, RolesGuard('superAdmin', 'admin', 'ID'), controller.getById)
