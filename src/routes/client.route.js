@@ -6,13 +6,14 @@ import ClientValidation from '../validation/ClientValidation.js';
 import { uploadFile } from '../middlewares/fileUpload.js'
 import { AuthGuard } from '../guards/auth.guard.js';
 import { RolesGuard } from '../guards/role.guard.js';
+import { requestLimit } from "../utils/request-limit.js";
 
 const router = Router();
 
 router
     .post("/", validate(ClientValidation.create), uploadFile.single('file'), controller.createClient)
     .post("/token", controller.generateNewToken)
-    .post("/signin", validate(ClientValidation.signin), controller.signIn)
+    .post("/signin", validate(ClientValidation.signin), requestLimit(300, 3), controller.signIn)
     .post("/signout", validate(ClientValidation.signout), controller.signOut)
 
     .get("/", AuthGuard, RolesGuard('superAdmin', 'admin', 'ID'),  controller.getAll)
