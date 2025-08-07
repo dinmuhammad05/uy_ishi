@@ -16,7 +16,7 @@ router
     .post("/signin", validate(ClientValidation.signin), requestLimit(300, 3), controller.signIn)
     .post("/signout", validate(ClientValidation.signout), controller.signOut)
 
-    .get("/", AuthGuard, RolesGuard('superAdmin', 'admin', 'ID'),  controller.getAll)
+    .get("/", AuthGuard, RolesGuard('superAdmin', 'admin',),  controller.getAll)
     .get("/:id", RolesGuard('superAdmin', 'admin', 'ID'), controller.getById)
 
     .patch("/confrim-otp", validate(ClientValidation.confirmOTP), controller.confirmOTP)

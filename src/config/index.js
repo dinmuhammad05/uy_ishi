@@ -10,7 +10,7 @@ export default {
     Admin: {
         SuperAdminUserName: process.env.userName,
         SuperAdminEmail: process.env.email,
-        SuperAdminPassword: process.env.hashedPassword
+        SuperAdminPassword: process.env.hashedPassword,
     },
     Token: {
         Access_Token_Key: String(process.env.Access_Token_Key),
@@ -22,12 +22,14 @@ export default {
         MAIL_HOST: String(process.env.MAIL_HOST),
         MAIL_PORT: String(process.env.MAIL_PORT),
         MAIL_USER: String(process.env.MAIL_USER),
-        MAIL_PASS: String(process.env.MAIL_PASS)
+        MAIL_PASS: String(process.env.MAIL_PASS),
     },
-    Redis:{
-        HOST:String(process.env.REDIS_HOST),
-        PORT:String(process.env.REDIS_PORT),
-        PASSWORD:String(process.env.REDIS_PASSWORD)
+    Redis: {
+        HOST: String(process.env.REDIS_HOST),
+        PORT: String(process.env.REDIS_PORT),
+        PASSWORD: String(process.env.REDIS_PASSWORD),
     },
-    
+    Device: {
+        SECRET_KEY: String(process.env.DEVICE_SECRET_KEY),
+    },
 };

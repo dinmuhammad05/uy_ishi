@@ -2,6 +2,9 @@ import { isValidObjectId } from "mongoose";
 import { AppError } from "../error/AppError.js";
 import { successRes } from "../utils/succes-res.js";
 
+import DeviceDetector from "node-device-detector";
+
+const device = new DeviceDetector();
 export class BaseController {
     constructor(model, populateFields = []) {
         this.model = model;

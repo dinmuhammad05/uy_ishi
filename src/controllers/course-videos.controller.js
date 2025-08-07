@@ -25,9 +25,10 @@ class VideosController extends BaseController {
                 throw new AppError("course not found", 404);
             }
 
+            const videoUrl= `/uploads/course-videos/${req.file?.filename}`
             const newVideo = await Videos.create({
                 ...req.body,
-                videoUrl: req.file?.path,
+                videoUrl,
             });
             return successRes(res, {}, 201);
         } catch (err) {

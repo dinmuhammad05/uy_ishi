@@ -1,5 +1,7 @@
 import { Schema, model } from "mongoose";
 
+import { DeviceSchema } from "./device.model.js";
+
 const OwnerCourseSchema = new Schema(
     {
         email: { type: String, required: true, unique: true },
@@ -7,10 +9,11 @@ const OwnerCourseSchema = new Schema(
         fullName: { type: String, required: true },
         isActive: { type: Boolean, default: false },
         hashedPassword: { type: String, required: true },
-        wallet: { type: Number, default:0 },
+        wallet: { type: Number, default: 0 },
         experience: { type: String },
-        image: {type: String},
-        role: {type: String, enum: ['owner'], default: 'owner'}
+        image: { type: String },
+        role: { type: String, enum: ["owner"], default: "owner" },
+        devices: [DeviceSchema],
     },
     {
         timestamps: true,

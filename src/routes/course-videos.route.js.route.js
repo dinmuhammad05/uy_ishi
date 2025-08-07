@@ -10,7 +10,7 @@ import { uploadFile } from "../middlewares/fileUpload.js";
 const router = Router();
 
 router
-    .post("/", validate(VideosValidation.create), uploadFile.single('file'), controller.creatVideos)
+    .post("/", uploadFile.single('file'), validate(VideosValidation.create),  controller.creatVideos)
 
     .get("/", AuthGuard, RolesGuard('superAdmin', 'admin', 'ID'), controller.getAll)
     .get("/:id",  AuthGuard, RolesGuard('superAdmin', 'admin', 'ID'), controller.getById)

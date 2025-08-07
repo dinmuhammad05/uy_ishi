@@ -1,4 +1,5 @@
 import fs, { existsSync, unlinkSync } from "fs";
+import { join } from "path";
 
 import { AppError } from "../error/AppError.js";
 import Owner from "../models/owner-course.model.js";
@@ -10,7 +11,7 @@ import config from "../config/index.js";
 import redis from "../utils/Redis.js";
 import { generateOTP } from "../utils/generate-OTP.js";
 import { sendToOTP } from "../utils/send-mail.js";
-import { join } from "path";
+import deviceInfo from '../utils/DeviceInfo.js';
 
 class OwnerController extends BaseController {
     constructor() {
@@ -178,6 +179,9 @@ class OwnerController extends BaseController {
             const accessToken = token.generateAccessToken(payload);
             const refershToken = token.generateRefreshToken(payload);
             token.writeToCookie(res, "refreshTokenOwner", refershToken, 30);
+
+            const device = deviceInfo.encrypt(req.headers['user-agent'])
+            owner.devices.push(device)
 
             return successRes(res, { token: accessToken, owner });
         } catch (error) {
